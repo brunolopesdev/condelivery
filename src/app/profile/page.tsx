@@ -32,7 +32,7 @@ import { Header } from "../components/Header";
 import { Footer } from "../components/Footer";
 import { useUserContext } from "../context/UserContext";
 import { ChangeEvent, useEffect, useState } from "react";
-import { AiFillStar, AiOutlineStar } from "react-icons/ai"; // Importando ícones de estrela
+import { AiFillStar, AiOutlineStar } from "react-icons/ai";
 import axios from "axios";
 
 interface User {

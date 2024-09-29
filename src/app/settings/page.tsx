@@ -79,7 +79,7 @@ export default function Settings() {
           duration: 5000,
           isClosable: true,
         });
-        fetchIntegrations(user.moradorId); // Atualizar a lista de integrações
+        fetchIntegrations(user.moradorId);
       } catch (error) {
         console.error("Erro ao criar integração:", error);
         toast({

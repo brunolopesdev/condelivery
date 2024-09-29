@@ -48,7 +48,6 @@ export default function Login() {
 
   const handleLogin = async () => {
     const res = await signIn("credentials", {
-      // redirect: false,
       callbackUrl: "/profile",
       email: formData.email,
       password: formData.password,

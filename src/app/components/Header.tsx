@@ -92,7 +92,6 @@ export const Header = ({ title }: Props) => {
 
         {user ? (
           <>
-            {/* Verificando o tipo do usuário */}
             {user.type === "morador" && (
               <>
                 <li>

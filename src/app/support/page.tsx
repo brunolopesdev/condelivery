@@ -94,17 +94,15 @@ export default function Suporte() {
         <VStack spacing={4} maxW="md" mx="auto">
           <Input
             placeholder="Nome"
-            // Adicione lógica para gerenciar o estado do nome, se necessário
           />
           <Input
             placeholder="Email"
-            // Adicione lógica para gerenciar o estado do email, se necessário
           />
           <Textarea
             placeholder="Digite sua mensagem aqui"
             rows={5}
             value={problemDescription}
-            onChange={(e) => setProblemDescription(e.target.value)} // Atualiza a descrição do problema
+            onChange={(e) => setProblemDescription(e.target.value)}
           />
           <HStack spacing={4} width="full">
             <Button

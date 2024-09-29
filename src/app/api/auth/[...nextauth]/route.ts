@@ -2,7 +2,6 @@ import NextAuth, { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import axios from "axios";
 
-// Define your NextAuth options
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
@@ -13,7 +12,6 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         try {
-          // Use the internal API route for login
           const response = await axios.post("https://condelivery-backend.vercel.app/login", {
             email: credentials?.email,
             password: credentials?.password,
@@ -24,8 +22,7 @@ export const authOptions: NextAuthOptions = {
           console.log("User:", user);
 
           if (user && user.token) {
-            // Return the user object, including the token
-            return { ...user.user, token: user.token }; // Assuming user object has user data and token
+            return { ...user.user, token: user.token };
           }
           return null;
         } catch (error) {
@@ -42,14 +39,14 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.accessToken = user.token; // Add token to the JWT
-        token.user = user; // Add user data to the JWT
+        token.accessToken = user.token;
+        token.user = user;
       }
       return token;
     },
     async session({ session, token }) {
-      session.user.accessToken = token.accessToken; // Include token in session
-      session.user = token.user; // Include user data in session
+      session.user.accessToken = token.accessToken;
+      session.user = token.user;
       return session;
     },
   },
@@ -58,8 +55,6 @@ export const authOptions: NextAuthOptions = {
   },
 };
 
-// Use the NextAuthHandler to let NextAuth handle dynamic routes
 const handler = NextAuth(authOptions);
 
-// Export POST and GET handlers
 export { handler as GET, handler as POST };

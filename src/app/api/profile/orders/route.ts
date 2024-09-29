@@ -1,9 +1,8 @@
-// app/api/dashboard/route.ts
+
 import { NextResponse } from "next/server";
 import axios from "axios";
 
 export async function GET(request: Request) {
-  // Extrair o id da query string
   const { searchParams } = new URL(request.url);
   const id = searchParams.get("id");
   const type = searchParams.get("type");
