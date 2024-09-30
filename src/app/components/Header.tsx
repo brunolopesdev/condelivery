@@ -23,10 +23,18 @@ import {
   Button,
   Stack,
   useToast,
+  useDisclosure,
+  Drawer,
+  DrawerBody,
+  DrawerHeader,
+  DrawerOverlay,
+  DrawerContent,
+  DrawerCloseButton,
+  useBreakpointValue,
 } from "@chakra-ui/react";
 import { useUserContext } from "../context/UserContext";
-import { BellIcon } from "@chakra-ui/icons";
-import io from "socket.io-client";
+import { BellIcon, HamburgerIcon } from "@chakra-ui/icons";
+import axios from "axios";
 
 interface Props {
   title: string;
@@ -42,33 +50,26 @@ export const Header = ({ title }: Props) => {
   const { user } = useUserContext();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const { isOpen, onOpen, onClose } = useDisclosure();
 
-  const socket = io("http://localhost:3000", {
-    query: { userId: user?.id },
-  });
-
+  const isMobile = useBreakpointValue({ base: true, md: false });
   const toggleModal = () => setIsModalOpen(!isModalOpen);
-
   const toast = useToast();
+
+  const fetchNotifications = async (id: number) => {
+    try {
+      const { data } = await axios.get(
+        `/api/profile/notifications?id=${id}&type=${"moradores"}`
+      );
+      setNotifications(data.data);
+    } catch (error) {
+      console.error("Erro ao buscar notificações:", error);
+    }
+  };
 
   useEffect(() => {
     if (user) {
-      socket.on("new_notification", (newNotification: Notification) => {
-        setNotifications((prev) => [...prev, newNotification]);
-
-        toast({
-          title: "Nova Notificação",
-          description: newNotification.mensagem,
-          status: "info",
-          duration: 5000,
-          isClosable: true,
-          position: "top-right",
-        });
-      });
-
-      return () => {
-        socket.off("new_notification");
-      };
+      fetchNotifications(3);
     }
   }, [user, toast]);
 
@@ -78,115 +79,203 @@ export const Header = ({ title }: Props) => {
         {title}
       </Heading>
       <Spacer />
-      <HStack as="ul" spacing={6} listStyleType="none">
-        <li>
-          <Link href="/" color="white">
-            Início
-          </Link>
-        </li>
-        <li>
-          <Link href="/support" color="white">
-            Suporte
-          </Link>
-        </li>
+      {isMobile ? (
+        <>
+          <IconButton
+            aria-label="Abrir menu"
+            icon={<HamburgerIcon />}
+            onClick={onOpen}
+            variant="outline"
+            colorScheme="whiteAlpha"
+            mr={4}
+          />
 
-        {user ? (
-          <>
-            {user.type === "morador" && (
-              <>
-                <li>
-                  <Link href="/profile" color="white">
-                    Perfil
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/settings" color="white">
-                    Configurações
-                  </Link>
-                </li>
-              </>
-            )}
-            {user.type === "colaborador" && (
-              <li>
-                <Link href="/colaborators" color="white">
-                  Minha Área
-                </Link>
-              </li>
-            )}
-            {user.type === "admin" && (
-              <>
-                <li>
-                  <Link href="/profile" color="white">
-                    Perfil
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/settings" color="white">
-                    Configurações
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/colaborators" color="white">
-                    Minha Área
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/dashboard" color="white">
-                    Dashboard
-                  </Link>
-                </li>
-              </>
-            )}
+          <Drawer isOpen={isOpen} placement="right" onClose={onClose}>
+            <DrawerOverlay />
+            <DrawerContent>
+              <DrawerCloseButton />
+              <DrawerHeader>Navegação</DrawerHeader>
 
-            <Flex>
-              <Avatar name={user.name} src="" bg="green" />
-              <Box ml="3">
-                <Text fontWeight="bold" textTransform="capitalize">
-                  {user.name}
-                </Text>
-                <HStack justifyContent="space-between">
-                  <Text fontSize="sm">{user.type}</Text>
+              <DrawerBody>
+                <Stack as="ul" spacing={4} listStyleType="none">
+                  <li>
+                    <Link href="/" onClick={onClose}>
+                      Início
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/support" onClick={onClose}>
+                      Suporte
+                    </Link>
+                  </li>
+
+                  {user ? (
+                    <>
+                      {user.type === "morador" && (
+                        <>
+                          <li>
+                            <Link href="/profile" onClick={onClose}>
+                              Perfil
+                            </Link>
+                          </li>
+                          <li>
+                            <Link href="/settings" onClick={onClose}>
+                              Configurações
+                            </Link>
+                          </li>
+                        </>
+                      )}
+                      {user.type === "colaborador" && (
+                        <li>
+                          <Link href="/colaborators" onClick={onClose}>
+                            Minha Área
+                          </Link>
+                        </li>
+                      )}
+                      {user.type === "admin" && (
+                        <>
+                          <li>
+                            <Link href="/profile" onClick={onClose}>
+                              Perfil
+                            </Link>
+                          </li>
+                          <li>
+                            <Link href="/settings" onClick={onClose}>
+                              Configurações
+                            </Link>
+                          </li>
+                          <li>
+                            <Link href="/colaborators" onClick={onClose}>
+                              Minha Área
+                            </Link>
+                          </li>
+                          <li>
+                            <Link href="/dashboard" onClick={onClose}>
+                              Dashboard
+                            </Link>
+                          </li>
+                        </>
+                      )}
+
+                      <li>
+                        <Flex align="center">
+                          <Avatar name={user.name} src="" bg="green" />
+                          <Box ml="3">
+                            <Text fontWeight="bold" textTransform="capitalize">
+                              {user.name}
+                            </Text>
+                            <Text
+                              fontSize="sm"
+                              cursor="pointer"
+                              onClick={() =>
+                                signOut({ callbackUrl: "/auth/login" })
+                              }
+                            >
+                              Sair
+                            </Text>
+                          </Box>
+                        </Flex>
+                      </li>
+                    </>
+                  ) : (
+                    <li>
+                      <Link href="/auth/login" onClick={onClose}>
+                        Login
+                      </Link>
+                    </li>
+                  )}
+                </Stack>
+              </DrawerBody>
+            </DrawerContent>
+          </Drawer>
+        </>
+      ) : (
+        <HStack as="ul" spacing={6} listStyleType="none">
+          <li>
+            <Link href="/">Início</Link>
+          </li>
+          <li>
+            <Link href="/support">Suporte</Link>
+          </li>
+          {user ? (
+            <>
+              {user.type === "morador" && (
+                <>
+                  <li>
+                    <Link href="/profile">Perfil</Link>
+                  </li>
+                  <li>
+                    <Link href="/settings">Configurações</Link>
+                  </li>
+                </>
+              )}
+              {user.type === "colaborador" && (
+                <li>
+                  <Link href="/colaborators">Minha Área</Link>
+                </li>
+              )}
+              {user.type === "admin" && (
+                <>
+                  <li>
+                    <Link href="/profile">Perfil</Link>
+                  </li>
+                  <li>
+                    <Link href="/settings">Configurações</Link>
+                  </li>
+                  <li>
+                    <Link href="/colaborators">Minha Área</Link>
+                  </li>
+                  <li>
+                    <Link href="/dashboard">Dashboard</Link>
+                  </li>
+                </>
+              )}
+
+              <Flex>
+                <Avatar name={user.name} src="" bg="green" />
+                <Box ml="3">
+                  <Text fontWeight="bold" textTransform="capitalize">
+                    {user.name}
+                  </Text>
                   <Text
                     fontSize="sm"
                     cursor="pointer"
                     onClick={() => signOut({ callbackUrl: "/auth/login" })}
                   >
-                    sair
+                    Sair
                   </Text>
-                </HStack>
-              </Box>
-            </Flex>
+                </Box>
+              </Flex>
+            </>
+          ) : (
+            <li>
+              <Link href="/auth/login">Login</Link>
+            </li>
+          )}
+        </HStack>
+      )}
 
-            <Box position="relative" ml={4}>
-              <IconButton
-                icon={<BellIcon />}
-                aria-label="Notificações"
-                variant="outline"
-                colorScheme="whiteAlpha"
-                onClick={toggleModal}
-              />
-              {notifications.length > 0 && (
-                <Badge
-                  colorScheme="red"
-                  borderRadius="full"
-                  position="absolute"
-                  top="-1"
-                  right="-1"
-                  fontSize="0.8em"
-                >
-                  {notifications.length}
-                </Badge>
-              )}
-            </Box>
-          </>
-        ) : (
-          <li>
-            <Link href="/auth/login" color="white">
-              Login
-            </Link>
-          </li>
+      <Box position="relative" ml={4}>
+        <IconButton
+          icon={<BellIcon />}
+          aria-label="Notificações"
+          variant="outline"
+          colorScheme="whiteAlpha"
+          onClick={toggleModal}
+        />
+        {notifications.length > 0 && (
+          <Badge
+            colorScheme="red"
+            borderRadius="full"
+            position="absolute"
+            top="-1"
+            right="-1"
+            fontSize="0.8em"
+          >
+            {notifications.length}
+          </Badge>
         )}
-      </HStack>
+      </Box>
 
       <Modal
         isOpen={isModalOpen}
@@ -201,7 +290,7 @@ export const Header = ({ title }: Props) => {
             {notifications.length > 0 ? (
               <Stack spacing={4}>
                 {notifications.map((notification) => (
-                  <Box key={notification.id} p={4} borderWidth="1px">
+                  <Box key={notification.mensagem} p={4} borderWidth="1px">
                     <Text>{notification.mensagem}</Text>
                     <Badge colorScheme="blue">
                       {new Date(notification.data).toLocaleDateString()}
@@ -214,7 +303,10 @@ export const Header = ({ title }: Props) => {
             )}
           </ModalBody>
           <ModalFooter>
-            <Button colorScheme="blue" onClick={toggleModal}>
+            <Button
+              colorScheme="blue"
+              onClick={() => [toggleModal(), setNotifications([])]}
+            >
               Fechar
             </Button>
           </ModalFooter>

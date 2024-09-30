@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
-    console.error("Erro ao cadastrar suporte:", error);
+    console.error("Erro ao buscar notificações:", error);
 
     return NextResponse.json(
       {

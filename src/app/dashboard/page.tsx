@@ -15,6 +15,8 @@ import {
   DrawerBody,
   useDisclosure,
   Spinner,
+  IconButton,
+  useBreakpointValue,
 } from "@chakra-ui/react";
 import {
   FaHome,
@@ -22,6 +24,7 @@ import {
   FaTruck,
   FaListAlt,
   FaBuilding,
+  FaBars,
 } from "react-icons/fa";
 import axios from "axios";
 
@@ -33,6 +36,7 @@ import Moradores from "../components/dashboard/Residents";
 import Overview from "../components/dashboard/Overview";
 import { RegistrationModal } from "../components/RegistrationModal";
 import { CreateOrderModal } from "../components/dashboard/CreateOrderModal";
+import React from "react";
 
 export interface Users {
   id: number;
@@ -41,7 +45,7 @@ export interface Users {
   tipo_usuario: string;
   moradores: {
     id: number;
-  }[]
+  }[];
 }
 export interface Collaborators {
   avaliacao_media: number;
@@ -88,6 +92,11 @@ export default function Dashboard() {
     onOpen: onUserModalOpen,
     onClose: onUserModalClose,
   } = useDisclosure();
+  const {
+    isOpen: isDrawerOpen,
+    onOpen: onDrawerOpen,
+    onClose: onDrawerClose,
+  } = useDisclosure();
 
   const [activeSection, setActiveSection] = useState("Overview");
   const [data, setData] = useState({
@@ -99,6 +108,7 @@ export default function Dashboard() {
   });
 
   const [loading, setLoading] = useState(true);
+  const isMobile = useBreakpointValue({ base: true, md: false });
 
   const renderSection = () => {
     switch (activeSection) {
@@ -120,9 +130,7 @@ export default function Dashboard() {
   const fetchAllData = async () => {
     try {
       const response = await axios.get("/api/dashboard");
-      console.log('Response: ', response.data);
       setData(response.data);
-      console.log("Data: ", response.data);
     } catch (error) {
       console.error("Failed to fetch data:", error);
     } finally {
@@ -135,74 +143,173 @@ export default function Dashboard() {
   }, []);
 
   if (loading) {
-    return <Flex height="100vh" alignItems={'center'} justifyContent={'center'}><Spinner size={'xl'}/></Flex>;
+    return (
+      <Flex height="100vh" alignItems={"center"} justifyContent={"center"}>
+        <Spinner size={"xl"} />
+      </Flex>
+    );
   }
 
   return (
     <Flex height="100vh">
-      <Box bg="blue.900" w="250px" color="white" p={4}>
-        <Heading as="h3" size="lg" textAlign="center" mb={8}>
-          Condelivery Admin
-        </Heading>
-        <VStack as="nav" spacing={4}>
-          <Button
-            variant="ghost"
-            leftIcon={<FaHome />}
-            onClick={() => setActiveSection("Overview")}
-            colorScheme="whiteAlpha"
-            width="full"
+      {/* Drawer for mobile sidebar */}
+      {isMobile ? (
+        <>
+          <IconButton
+            icon={<FaBars />}
+            aria-label="Menu"
+            onClick={onDrawerOpen}
+            position="absolute"
+            top={4}
+            left={4}
+            zIndex={2}
+          />
+          <Drawer
+            isOpen={isDrawerOpen}
+            placement="left"
+            onClose={onDrawerClose}
           >
-            Visão Geral
-          </Button>
-          <Button
-            variant="ghost"
-            leftIcon={<FaListAlt />}
-            onClick={() => setActiveSection("Pedidos")}
-            colorScheme="whiteAlpha"
-            width="full"
-          >
-            Pedidos
-          </Button>
-          <Button
-            variant="ghost"
-            leftIcon={<FaTruck />}
-            onClick={() => setActiveSection("Entregas")}
-            colorScheme="whiteAlpha"
-            width="full"
-          >
-            Entregas
-          </Button>
-          <Button
-            variant="ghost"
-            leftIcon={<FaUsers />}
-            onClick={() => setActiveSection("Colaboradores")}
-            colorScheme="whiteAlpha"
-            width="full"
-          >
-            Colaboradores
-          </Button>
-          <Button
-            variant="ghost"
-            leftIcon={<FaBuilding />}
-            onClick={() => setActiveSection("Condomínios")}
-            colorScheme="whiteAlpha"
-            width="full"
-          >
-            Condomínios
-          </Button>
-          <Button
-            variant="ghost"
-            leftIcon={<FaHome />}
-            onClick={() => setActiveSection("Moradores")}
-            colorScheme="whiteAlpha"
-            width="full"
-          >
-            Moradores
-          </Button>
-        </VStack>
-      </Box>
+            <DrawerOverlay />
+            <DrawerContent>
+              <DrawerHeader>Condelivery Admin</DrawerHeader>
+              <DrawerBody>
+                <VStack as="nav" spacing={4}>
+                  <Button
+                    variant="ghost"
+                    leftIcon={<FaHome />}
+                    onClick={() => {
+                      setActiveSection("Overview");
+                      onDrawerClose();
+                    }}
+                    width="full"
+                  >
+                    Visão Geral
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    leftIcon={<FaListAlt />}
+                    onClick={() => {
+                      setActiveSection("Pedidos");
+                      onDrawerClose();
+                    }}
+                    width="full"
+                  >
+                    Pedidos
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    leftIcon={<FaTruck />}
+                    onClick={() => {
+                      setActiveSection("Entregas");
+                      onDrawerClose();
+                    }}
+                    width="full"
+                  >
+                    Entregas
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    leftIcon={<FaUsers />}
+                    onClick={() => {
+                      setActiveSection("Colaboradores");
+                      onDrawerClose();
+                    }}
+                    width="full"
+                  >
+                    Colaboradores
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    leftIcon={<FaBuilding />}
+                    onClick={() => {
+                      setActiveSection("Condomínios");
+                      onDrawerClose();
+                    }}
+                    width="full"
+                  >
+                    Condomínios
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    leftIcon={<FaHome />}
+                    onClick={() => {
+                      setActiveSection("Moradores");
+                      onDrawerClose();
+                    }}
+                    width="full"
+                  >
+                    Moradores
+                  </Button>
+                </VStack>
+              </DrawerBody>
+            </DrawerContent>
+          </Drawer>
+        </>
+      ) : (
+        <Box bg="blue.900" w="250px" color="white" p={4}>
+          <Heading as="h3" size="lg" textAlign="center" mb={8}>
+            Condelivery Admin
+          </Heading>
+          <VStack as="nav" spacing={4}>
+            <Button
+              variant="ghost"
+              leftIcon={<FaHome />}
+              onClick={() => setActiveSection("Overview")}
+              colorScheme="whiteAlpha"
+              width="full"
+            >
+              Visão Geral
+            </Button>
+            <Button
+              variant="ghost"
+              leftIcon={<FaListAlt />}
+              onClick={() => setActiveSection("Pedidos")}
+              colorScheme="whiteAlpha"
+              width="full"
+            >
+              Pedidos
+            </Button>
+            <Button
+              variant="ghost"
+              leftIcon={<FaTruck />}
+              onClick={() => setActiveSection("Entregas")}
+              colorScheme="whiteAlpha"
+              width="full"
+            >
+              Entregas
+            </Button>
+            <Button
+              variant="ghost"
+              leftIcon={<FaUsers />}
+              onClick={() => setActiveSection("Colaboradores")}
+              colorScheme="whiteAlpha"
+              width="full"
+            >
+              Colaboradores
+            </Button>
+            <Button
+              variant="ghost"
+              leftIcon={<FaBuilding />}
+              onClick={() => setActiveSection("Condomínios")}
+              colorScheme="whiteAlpha"
+              width="full"
+            >
+              Condomínios
+            </Button>
+            <Button
+              variant="ghost"
+              leftIcon={<FaHome />}
+              onClick={() => setActiveSection("Moradores")}
+              colorScheme="whiteAlpha"
+              width="full"
+            >
+              Moradores
+            </Button>
+          </VStack>
+        </Box>
+      )}
 
-      <Box bg="gray.50" flex="1" p={8}>
+      <Box bg="gray.50" flex="1" p={8} pt={50}>
         <Flex alignItems="center" mb={8}>
           <Heading as="h1" size="xl">
             {activeSection === "Overview" ? "Visão Geral" : activeSection}
@@ -221,8 +328,12 @@ export default function Dashboard() {
             <DrawerHeader>Selecione uma ação</DrawerHeader>
             <DrawerBody>
               <VStack spacing={4}>
-                <Button onClick={onPedidoModalOpen} w={'full'}>Criar Pedido</Button>
-                <Button onClick={onUserModalOpen} w={'full'}>Cadastrar Usuário</Button>
+                <Button onClick={onPedidoModalOpen} w={"full"}>
+                  Criar Pedido
+                </Button>
+                <Button onClick={onUserModalOpen} w={"full"}>
+                  Cadastrar Usuário
+                </Button>
               </VStack>
             </DrawerBody>
           </DrawerContent>
@@ -233,8 +344,11 @@ export default function Dashboard() {
           onClose={onUserModalClose}
         />
 
-        <CreateOrderModal isPedidoModalOpen={isPedidoModalOpen} onPedidoModalClose={onPedidoModalClose} data={data} />
-
+        <CreateOrderModal
+          isPedidoModalOpen={isPedidoModalOpen}
+          onPedidoModalClose={onPedidoModalClose}
+          data={data}
+        />
       </Box>
     </Flex>
   );

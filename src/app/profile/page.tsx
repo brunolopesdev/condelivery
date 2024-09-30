@@ -63,6 +63,11 @@ const statusArray = ["Cancelado", "Pendente", "Entrega iniciada", "Entregue"];
 const ProfilePage = () => {
   const { user, updateUser, getUserOrders } = useUserContext();
   const [userOrders, setUserOrders] = useState<Orders[]>([]);
+  const {
+    isOpen: isDeleteModalOpen,
+    onOpen: onDeleteModalOpen,
+    onClose: onDeleteModalClose,
+  } = useDisclosure();
   const [updatedUser, setUpdatedUser] = useState<User>({
     id: user?.id || 0,
     nome: user?.name || "",
@@ -123,7 +128,7 @@ const ProfilePage = () => {
   const fetchOrders = async (id: number) => {
     if (id) {
       const orders = await getUserOrders(id, "moradores");
-      console.log("Orders fetched:", orders);
+      
       setUserOrders(orders);
     }
   };
@@ -135,7 +140,7 @@ const ProfilePage = () => {
       await axios.post(`/api/profile/rating`, {
         nota: rating,
         comentarios: comments,
-        moradorId: 3,
+        moradorId: user?.moradorId,
         colaboradorId: selectedOrder.colaborador?.id,
         data_avaliacao: new Date().toISOString(),
       });
@@ -160,9 +165,29 @@ const ProfilePage = () => {
     }
   };
 
+  const handleDeleteUser = async () => {
+    try {
+      await axios.delete(`/api/profile/delete/user?id=${user?.id}`);
+      toast({
+        title: "Usuário excluído com sucesso!",
+        status: "success",
+        duration: 5000,
+        isClosable: true,
+      });
+    } catch (error) {
+      toast({
+        title: "Erro ao excluir usuário.",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
+    }
+    onDeleteModalClose();
+  };
+
   useEffect(() => {
     if (user?.moradorId) {
-      fetchOrders(user?.moradorId);
+      fetchOrders(3);
     }
   }, [user]);
 
@@ -177,12 +202,14 @@ const ProfilePage = () => {
             <Heading size="md">{user?.name}</Heading>
             <Text color="gray.500">Detalhes do Perfil</Text>
           </VStack>
-          <HStack ml="auto">
-            <Button colorScheme="red" variant="outline">
+          <VStack ml="auto">
+            <Button colorScheme="blue" size={"sm"}>
+              Editar Perfil
+            </Button>
+            <Button colorScheme="red" size={"sm"} onClick={onDeleteModalOpen}>
               Excluir Perfil
             </Button>
-            <Button colorScheme="blue">Editar Perfil</Button>
-          </HStack>
+          </VStack>
         </Flex>
 
         <Heading size="md" mb={4} p={4}>
@@ -315,6 +342,28 @@ const ProfilePage = () => {
           </Skeleton>
         )}
       </Box>
+
+      <Modal isOpen={isDeleteModalOpen} onClose={onDeleteModalClose}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Excluir Perfil</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <Text>
+              Tem certeza que deseja excluir o perfil? Esta ação não pode ser
+              desfeita.
+            </Text>
+          </ModalBody>
+          <ModalFooter>
+            <Button colorScheme="red" onClick={handleDeleteUser}>
+              Sim, Excluir
+            </Button>
+            <Button variant="ghost" onClick={onDeleteModalClose}>
+              Cancelar
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
 
       <Modal isOpen={isOpen} onClose={onClose}>
         <ModalOverlay />

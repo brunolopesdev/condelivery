@@ -10,13 +10,13 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(
       {
-        message: "Ratings found",
+        message: "Avaliações encontradas",
         avaliacoes: response.data,
       },
       { status: 201 }
     );
   } catch (error) {
-    console.error("Erro ao cadastrar suporte:", error);
+    console.error("Erro ao buscar avaliacoes:", error);
 
     return NextResponse.json(
       {
