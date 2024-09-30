@@ -1,5 +1,3 @@
-// src/app/api/auth/authOptions.ts
-
 import CredentialsProvider from "next-auth/providers/credentials";
 import { NextAuthOptions } from "next-auth";
 import axios from "axios";
@@ -56,4 +54,5 @@ export const authOptions: NextAuthOptions = {
   pages: {
     signIn: "/auth/login",
   },
+  secret: process.env.NEXTAUTH_SECRET,
 };
