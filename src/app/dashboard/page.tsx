@@ -152,7 +152,6 @@ export default function Dashboard() {
 
   return (
     <Flex height="100vh">
-      {/* Drawer for mobile sidebar */}
       {isMobile ? (
         <>
           <IconButton

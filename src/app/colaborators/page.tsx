@@ -146,7 +146,7 @@ const CollaboratorsPage = () => {
   }, [user]);
 
   return (
-    <Container bg="white" minH="100vh" maxW="container.xl" p={[4, 6]}>
+    <Container bg="white" minH="100vh" maxW="container.xl">
       <Header title={user?.name || ''} />
 
       <Box bg="gray.200" p={[4, 6]} textAlign="center" shadow="md">

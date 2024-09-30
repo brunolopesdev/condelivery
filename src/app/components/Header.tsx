@@ -94,7 +94,7 @@ export const Header = ({ title }: Props) => {
             <DrawerOverlay />
             <DrawerContent>
               <DrawerCloseButton />
-              <DrawerHeader>Navegação</DrawerHeader>
+              <DrawerHeader>Menu</DrawerHeader>
 
               <DrawerBody>
                 <Stack as="ul" spacing={4} listStyleType="none">
