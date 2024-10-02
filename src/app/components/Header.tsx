@@ -159,7 +159,7 @@ export const Header = ({ title }: Props) => {
 
                       <li>
                         <Flex align="center">
-                          <Avatar name={user.name} src="" bg="green" />
+                          <Avatar name={user.name} src="" bg="#86a6d7" />
                           <Box ml="3">
                             <Text fontWeight="bold" textTransform="capitalize">
                               {user.name}
@@ -232,7 +232,7 @@ export const Header = ({ title }: Props) => {
               )}
 
               <Flex>
-                <Avatar name={user.name} src="" bg="green" />
+                <Avatar name={user.name} src="" bg="#86a6d7" />
                 <Box ml="3">
                   <Text fontWeight="bold" textTransform="capitalize">
                     {user.name}
@@ -265,7 +265,7 @@ export const Header = ({ title }: Props) => {
         />
         {notifications.length > 0 && (
           <Badge
-            colorScheme="red"
+            colorScheme="green"
             borderRadius="full"
             position="absolute"
             top="-1"
