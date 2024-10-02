@@ -36,68 +36,70 @@ export default function Settings() {
   const [integrations, setIntegrations] = useState<Integrations[]>([]);
   const toast = useToast();
 
+  const showToast = (
+    title: string,
+    description: string,
+    status: "success" | "error" | "warning"
+  ) => {
+    toast({
+      title,
+      description,
+      status,
+      duration: 5000,
+      isClosable: true,
+    });
+  };
+
   const fetchIntegrations = async (id: number) => {
     try {
-      const { data } = await axios.get(
+      const response = await axios.get(
         `/api/profile/integrations/fetch?id=${id}`
       );
-
-      setIntegrations(data.data);
-      toast({
-        title: "Integrações encontradas.",
-        description: "Integrações carregadas com sucesso.",
-        status: "success",
-        duration: 5000,
-        isClosable: true,
-      });
-    } catch (error) {
-      console.error("Erro ao buscar integrações:", error);
-      toast({
-        title: "Erro ao buscar integrações.",
-        description: "Ocorreu um erro. Tente novamente mais tarde.",
-        status: "error",
-        duration: 5000,
-        isClosable: true,
-      });
+      setIntegrations(response.data.data);
+      showToast(
+        "Integrações encontradas",
+        "Integrações carregadas com sucesso",
+        "success"
+      );
+    } catch (error: any) {
+      showToast(
+        "Erro ao buscar integrações",
+        error.message || "Tente novamente mais tarde",
+        "error"
+      );
     }
   };
 
   const handleIntegrations = async () => {
-    if (user?.moradorId) {
-      try {
-        await axios.post("/api/profile/integrations/create", {
-          plataforma: selectedApp,
-          moradorId: user.moradorId,
-          data_integracao: new Date(),
-          status: "Ativado",
-        });
+    if (!user?.moradorId) {
+      showToast(
+        "Morador não encontrado",
+        "Verifique suas informações de usuário",
+        "warning"
+      );
+      return;
+    }
 
-        toast({
-          title: "Integração criada.",
-          description: `A integração com ${selectedApp} foi ativada com sucesso.`,
-          status: "success",
-          duration: 5000,
-          isClosable: true,
-        });
-        fetchIntegrations(user.moradorId);
-      } catch (error) {
-        console.error("Erro ao criar integração:", error);
-        toast({
-          title: "Erro ao criar integração.",
-          description: "Ocorreu um erro. Tente novamente mais tarde.",
-          status: "error",
-          duration: 5000,
-          isClosable: true,
-        });
-      }
-    } else {
-      toast({
-        title: "Morador não encontrado.",
-        description: "Por favor, verifique suas informações de usuário.",
-        status: "warning",
-        duration: 5000,
-        isClosable: true,
+    try {
+      const response = await axios.post("/api/profile/integrations/create", {
+        plataforma: selectedApp,
+        moradorId: user.moradorId,
+        data_integracao: new Date(),
+        status: "Ativado",
       });
+
+      setIntegrations((prev) => [...prev, response.data.data]);
+      showToast(
+        "Integração criada",
+        `A integração com ${selectedApp} foi ativada com sucesso`,
+        "success"
+      );
+    } catch (error) {
+      showToast(
+        "Erro ao criar integração",
+        "Ocorreu um erro. Tente novamente mais tarde",
+        "error"
+      );
     }
   };
 
@@ -129,14 +131,22 @@ export default function Settings() {
         </Heading>
         <Text mb={4}>Selecione os aplicativos para integração</Text>
 
-        <RadioGroup onChange={setSelectedApp} value={selectedApp}>
-          <HStack spacing={8}>
+        <RadioGroup
+          onChange={(value) => setSelectedApp(value.toLowerCase())}
+          value={selectedApp}
+        >
+          <Stack
+            direction={{ base: "column", md: "row" }}
+            spacing={{ base: 4, md: 8 }}
+            wrap="wrap"
+          >
             <Radio value="ifood">iFood</Radio>
             <Radio value="rappi">Rappi</Radio>
             <Radio value="uber eats">Uber Eats</Radio>
             <Radio value="mercado livre">Mercado Livre</Radio>
-          </HStack>
+          </Stack>
         </RadioGroup>
+
         <Button mt={4} colorScheme="green" onClick={handleIntegrations}>
           Salvar
         </Button>

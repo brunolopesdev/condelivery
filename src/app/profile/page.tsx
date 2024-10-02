@@ -31,11 +31,11 @@ import {
 import { Header } from "../components/Header";
 import { Footer } from "../components/Footer";
 import { useUserContext } from "../context/UserContext";
-import { ChangeEvent, useEffect, useState } from "react";
-import { AiFillStar, AiOutlineStar } from "react-icons/ai";
+import { ChangeEvent, useCallback, useEffect, useState } from "react";
 import axios from "axios";
+import { RatingModal } from "../components/RatingModal";
 
-interface User {
+export interface User {
   id: number;
   nome: string;
   email: string;
@@ -58,11 +58,20 @@ export interface Orders {
   };
 }
 
-const statusArray = ["Cancelado", "Pendente", "Entrega iniciada", "Entregue"];
+const statusArray = ["cancelado", "pendente", "entrega iniciada", "entregue"];
 
 const ProfilePage = () => {
+  const toast = useToast();
   const { user, updateUser, getUserOrders } = useUserContext();
   const [userOrders, setUserOrders] = useState<Orders[]>([]);
+  const [selectedOrder, setSelectedOrder] = useState<Orders | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [loadingOrders, setLoadingOrders] = useState(false);
+  const {
+    isOpen: isRatingModalOpen,
+    onOpen: onRatingModalOpen,
+    onClose: onRatingModalClose,
+  } = useDisclosure();
   const {
     isOpen: isDeleteModalOpen,
     onOpen: onDeleteModalOpen,
@@ -76,25 +85,16 @@ const ProfilePage = () => {
     telefone: user?.phone?.toString() || "",
   });
 
-  const toast = useToast();
-  const { isOpen, onOpen, onClose } = useDisclosure();
-  const [selectedOrder, setSelectedOrder] = useState<Orders | null>(null);
-  const [rating, setRating] = useState<number>(0);
-  const [comments, setComments] = useState<string>("");
-
-  const handleInputChange =
+  const handleInputChange = useCallback(
     (field: keyof User) => (event: ChangeEvent<HTMLInputElement>) => {
       const { value } = event.target;
-      if (user) {
-        setUpdatedUser((prev) => ({
-          ...prev,
-          id: user?.id,
-          [field]: value,
-        }));
-      }
-    };
+      setUpdatedUser((prev) => ({ ...prev, [field]: value }));
+    },
+    []
+  );
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
+    setIsSaving(true);
     if (!updatedUser.nome || !updatedUser.email || !updatedUser.telefone) {
       toast({
         title: "Erro",
@@ -106,62 +106,49 @@ const ProfilePage = () => {
       return;
     }
 
-    if (updatedUser.id) {
-      try {
-        await updateUser({
-          ...updatedUser,
-          telefone: Number(updatedUser.telefone),
-        });
-        toast({
-          title: "Sucesso",
-          description: "Usuário atualizado com sucesso!",
-          status: "success",
-          duration: 5000,
-          isClosable: true,
-        });
-      } catch (error) {
-        console.error("Failed to update user:", error);
-      }
-    }
-  };
-
-  const fetchOrders = async (id: number) => {
-    if (id) {
-      const orders = await getUserOrders(id, "moradores");
-      
-      setUserOrders(orders);
-    }
-  };
-
-  const handleRatingSubmit = async () => {
-    if (!selectedOrder) return;
-
     try {
-      await axios.post(`/api/profile/rating`, {
-        nota: rating,
-        comentarios: comments,
-        moradorId: user?.moradorId,
-        colaboradorId: selectedOrder.colaborador?.id,
-        data_avaliacao: new Date().toISOString(),
+      await updateUser({
+        ...updatedUser,
+        telefone: Number(updatedUser.telefone),
       });
-
       toast({
-        title: "Avaliação enviada!",
+        title: "Sucesso",
+        description: "Usuário atualizado com sucesso!",
         status: "success",
         duration: 5000,
         isClosable: true,
       });
-
-      setRating(0);
-      setComments("");
-      onClose();
     } catch (error) {
       toast({
-        title: "Erro ao enviar avaliação.",
+        title: "Erro ao atualizar usuário.",
+        description: (error as Error).message,
         status: "error",
         duration: 5000,
         isClosable: true,
       });
+    } finally {
+      setIsSaving(false);
+    }
+  }, [updatedUser]);
+
+  const fetchOrders = async (id: number) => {
+    setLoadingOrders(true);
+    try {
+      if (id) {
+        const orders = await getUserOrders(id, "moradores");
+        setUserOrders(orders);
+      }
+    } catch (error) {
+      console.error("Erro ao carregar pedidos:", error);
+      toast({
+        title: "Erro ao carregar pedidos",
+        description: "Tente novamente mais tarde.",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
+    } finally {
+      setLoadingOrders(false);
     }
   };
 
@@ -188,6 +175,18 @@ const ProfilePage = () => {
   useEffect(() => {
     if (user?.moradorId) {
       fetchOrders(3);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      setUpdatedUser({
+        id: user.id,
+        nome: user.name,
+        email: user.email,
+        type: user.type,
+        telefone: user.phone.toString(),
+      });
     }
   }, [user]);
 
@@ -250,7 +249,7 @@ const ProfilePage = () => {
               />
             </FormControl>
           </HStack>
-          <Button colorScheme="green" onClick={handleSave}>
+          <Button colorScheme="green" onClick={handleSave} isLoading={isSaving}>
             Salvar alterações
           </Button>
         </VStack>
@@ -260,11 +259,8 @@ const ProfilePage = () => {
         <Heading size="md" mb={4}>
           Últimos Pedidos
         </Heading>
-        {userOrders.length === 0 && (
-          <Text>Você ainda não fez nenhum pedido.</Text>
-        )}
-        {userOrders.length > 0 && (
-          <Skeleton h={200} isLoaded={userOrders.length > 0}>
+        <Skeleton h={200} isLoaded={!loadingOrders}>
+          {userOrders.length > 0 ? (
             <Flex gap={4}>
               {userOrders.length > 0 &&
                 userOrders.map((order) => (
@@ -306,15 +302,15 @@ const ProfilePage = () => {
 
                     <Progress
                       colorScheme={
-                        order.status === "Pendente"
+                        order.status.toLowerCase() === "pendente"
                           ? "yellow"
-                          : order.status === "Entrega iniciada"
+                          : order.status.toLowerCase() === "entrega iniciada"
                           ? "orange"
-                          : order.status === "Entregue"
+                          : order.status.toLowerCase() === "entregue"
                           ? "green"
-                          : order.status === "Cancelado"
+                          : order.status.toLowerCase() === "cancelado"
                           ? "red"
-                          : "gray"
+                          : ""
                       }
                       value={
                         (statusArray.indexOf(order.status) + 1) *
@@ -324,14 +320,15 @@ const ProfilePage = () => {
                       mb={4}
                     />
 
-                    {order.status === "Entregue" && (
+                    {order.status === "entregue" && (
                       <Text
                         color={"grey"}
                         fontSize="sm"
                         onClick={() => {
                           setSelectedOrder(order);
-                          onOpen();
+                          onRatingModalOpen();
                         }}
+                        cursor={"pointer"}
                       >
                         Avaliar Entrega
                       </Text>
@@ -339,9 +336,17 @@ const ProfilePage = () => {
                   </Box>
                 ))}
             </Flex>
-          </Skeleton>
-        )}
+          ) : (
+            <Text>Você ainda não fez nenhum pedido.</Text>
+          )}
+        </Skeleton>
       </Box>
+
+      <RatingModal
+        isRatingModalOpen={isRatingModalOpen}
+        onRatingModalClose={onRatingModalClose}
+        selectedOrder={selectedOrder}
+      />
 
       <Modal isOpen={isDeleteModalOpen} onClose={onDeleteModalClose}>
         <ModalOverlay />
@@ -359,50 +364,6 @@ const ProfilePage = () => {
               Sim, Excluir
             </Button>
             <Button variant="ghost" onClick={onDeleteModalClose}>
-              Cancelar
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
-
-      <Modal isOpen={isOpen} onClose={onClose}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Avalie sua entrega</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>
-            <FormControl>
-              <FormLabel>Nota</FormLabel>
-              <HStack>
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <Tooltip key={star} label={`${star} estrela(s)`}>
-                    <Icon
-                      as={star <= rating ? AiFillStar : AiOutlineStar}
-                      boxSize={8}
-                      color={star <= rating ? "yellow.400" : "gray.300"}
-                      onClick={() => setRating(star)}
-                      cursor="pointer"
-                    />
-                  </Tooltip>
-                ))}
-              </HStack>
-            </FormControl>
-            <FormControl mt={4}>
-              <FormLabel>Comentários</FormLabel>
-              <Input
-                type="text"
-                value={comments}
-                onChange={(e) => setComments(e.target.value)}
-                placeholder="Comentários sobre a entrega"
-              />
-            </FormControl>
-          </ModalBody>
-
-          <ModalFooter>
-            <Button colorScheme="blue" mr={3} onClick={handleRatingSubmit}>
-              Enviar Avaliação
-            </Button>
-            <Button variant="ghost" onClick={onClose}>
               Cancelar
             </Button>
           </ModalFooter>

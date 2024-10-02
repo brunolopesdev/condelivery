@@ -1,4 +1,4 @@
-'use client'
+"use client";
 
 import {
   Box,
@@ -18,6 +18,8 @@ import { Header } from "./components/Header";
 import { Footer } from "./components/Footer";
 import { Image, Link } from "@chakra-ui/next-js";
 import { useUserContext } from "./context/UserContext";
+import { RatingsCard } from "./components/ui/RatingsCard";
+import { ServiceCard } from "./components/ui/ServiceCard";
 
 export default function Home() {
   const { ratings } = useUserContext();
@@ -71,23 +73,9 @@ export default function Home() {
         <Heading as="h2" textAlign="center" mb={8}>
           Serviços em destaque
         </Heading>
-        <SimpleGrid columns={{ base: 1, md: 3 }} spacing={8}>
+        <SimpleGrid columns={{ base: 1, sm: 2, md: 3 }} spacing={8}>
           {services.map((service) => (
-            <Card maxW="sm" key={service.id}>
-              <CardBody>
-                <Image
-                  src={service.img}
-                  alt={service.title}
-                  borderRadius="lg"
-                  width={300}
-                  height={200}
-                />
-                <Stack mt="6" spacing="3">
-                  <Heading size="md">{service.title}</Heading>
-                  <Text>{service.description}</Text>
-                </Stack>
-              </CardBody>
-            </Card>
+            <ServiceCard service={service} />
           ))}
         </SimpleGrid>
       </Box>
@@ -99,25 +87,7 @@ export default function Home() {
         <SimpleGrid columns={{ base: 1, md: 2 }} spacing={8}>
           {ratings?.map((rating, index) => (
             <Flex gap={4} justify="center" key={rating.id}>
-              <Box bg="white" p={4} borderRadius="md" shadow="md" width="300px">
-                <Text textAlign={"center"} fontWeight={600}>
-                  Avaliação {index + 1}
-                </Text>
-                <Text textAlign={"center"}>
-                  {Array.from({ length: 5 }, (_, i) =>
-                    i < rating.nota ? "⭐" : "☆"
-                  )}
-                </Text>
-
-                <Text
-                  fontSize="sm"
-                  color="gray.500"
-                  textAlign={"center"}
-                  fontWeight={600}
-                >
-                  {rating.comentarios}
-                </Text>
-              </Box>
+              <RatingsCard rating={rating} index={index} />
             </Flex>
           ))}
         </SimpleGrid>
@@ -130,7 +100,13 @@ export default function Home() {
         <VStack spacing={4} maxW="lg" mx="auto">
           <Input placeholder="Nome completo" />
           <Input placeholder="Email" />
-          <Link href={'/auth/login'} h={30} color={'green'} fontWeight={700}>
+          <Link
+            href={"/auth/login"}
+            as={Button}
+            colorScheme="green"
+            variant="outline"
+            fontWeight={700}
+          >
             Enviar
           </Link>
         </VStack>
